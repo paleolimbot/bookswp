@@ -22,7 +22,13 @@ get_header(); ?>
 
 			<?php /* Start the Loop */ ?>
 			<?php while ( have_posts() ) : the_post(); ?>
-				<?php get_template_part( 'content', get_post_format() ); ?>
+				<?php 
+                                if($post->post_type == 'book') {
+                                    get_template_part( 'content', 'book' );
+                                } else {
+                                    get_template_part( 'content', get_post_format() );
+                                }
+                                ?>
 			<?php endwhile; ?>
 
 			<?php twentytwelve_content_nav( 'nav-below' ); ?>
