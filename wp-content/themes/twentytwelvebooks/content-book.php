@@ -25,7 +25,8 @@
 				<a href="<?php the_permalink(); ?>" rel="bookmark"><?php the_title(); ?></a>
 			</h1>
 			<?php endif; // is_single() ?>
-                        <div class="book-terms"><?php the_terms($post->ID, 'people', 'by ') ?> / <?php the_terms($post->ID, 'shelves', 'shelved under ') ?></div>
+                        
+                        <div class="book-terms"><?php the_terms($post->ID, 'people', 'by ');?> <?php the_terms($post->ID, 'shelves', '<span class="shelved">shelved under ', '</span>') ?></div>
 			<?php if ( comments_open() ) : ?>
 				<div class="comments-link">
 					<?php comments_popup_link( '<span class="leave-reply">' . __( 'Leave a reply', 'twentytwelve' ) . '</span>', __( '1 Reply', 'twentytwelve' ), __( '% Replies', 'twentytwelve' ) ); ?>
@@ -36,7 +37,12 @@
                     <?php if ( ! post_password_required() && ! is_attachment() ) : ?>
                     <a href="<?php the_permalink() ?>"><?php the_post_thumbnail(); ?></a>
 		    <?php endif; ?>
-			<?php the_excerpt(); ?>
+                    <?php 
+                    if ( is_single() ) {
+                        the_content();
+                    } else {
+                        the_excerpt();
+                    } ?>
 		</div><!-- .entry-summary -->
 		<footer class="entry-meta">
                     <?php the_terms($post->ID, 'genres', '<div class="book-terms">Genres: ', '</div>') ?>

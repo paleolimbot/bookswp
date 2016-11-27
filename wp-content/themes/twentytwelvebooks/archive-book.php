@@ -21,7 +21,6 @@ get_header(); ?>
 
 	<section id="primary" class="site-content">
 		<div id="content" role="main">
-
 		<?php if ( have_posts() ) : ?>
 			<header class="archive-header">
 				<h1 class="archive-title"><?php
@@ -35,6 +34,7 @@ get_header(); ?>
 						_e( 'Books', 'twentytwelve' );
 					endif;
 				?></h1>
+                                <?php twentytwelve_content_nav( 'nav-above' ); ?>
 			</header><!-- .archive-header -->
 
 			<?php

@@ -16,7 +16,8 @@ get_header(); ?>
 
 			<header class="page-header">
 				<h1 class="page-title"><?php printf( __( 'Search Results for: %s', 'twentytwelve' ), '<span>' . get_search_query() . '</span>' ); ?></h1>
-			</header>
+			        <?php twentytwelve_content_nav( 'nav-above' ); ?>
+                        </header>
 
 			<?php twentytwelve_content_nav( 'nav-above' ); ?>
 

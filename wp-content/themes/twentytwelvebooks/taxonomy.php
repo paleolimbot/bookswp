@@ -24,6 +24,7 @@ $term = get_term_by( 'slug', get_query_var( 'term' ), get_query_var( 'taxonomy' 
 			<?php if ( tag_description() ) : // Show an optional tag description ?>
 				<div class="archive-meta"><?php echo term_description(); ?></div>
 			<?php endif; ?>
+                        <?php twentytwelve_content_nav( 'nav-above' ); ?>
 			</header><!-- .archive-header -->
 
 			<?php

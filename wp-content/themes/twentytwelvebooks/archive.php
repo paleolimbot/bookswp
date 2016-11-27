@@ -35,6 +35,7 @@ get_header(); ?>
 						_e( 'Archives', 'twentytwelve' );
 					endif;
 				?></h1>
+                            <?php twentytwelve_content_nav( 'nav-above' ); ?>
 			</header><!-- .archive-header -->
 
 			<?php

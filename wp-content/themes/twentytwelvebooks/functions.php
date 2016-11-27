@@ -292,10 +292,21 @@ function twentytwelve_content_nav( $html_id ) {
 	global $wp_query;
 
 	if ( $wp_query->max_num_pages > 1 ) : ?>
+                <?php
+                $total_results = $wp_query->found_posts;
+                $showing_posts = $wp_query->post_count;
+                $paged = $wp_query->query_vars['paged'];
+                if(!$paged) {
+                    $paged = 1;
+                }
+                $posts_per_page = $wp_query->query_vars['posts_per_page'];
+                ?>
+                
 		<nav id="<?php echo esc_attr( $html_id ); ?>" class="navigation" role="navigation">
-			<h3 class="assistive-text"><?php _e( 'Post navigation', 'twentytwelve' ); ?></h3>
-			<div class="nav-previous"><?php next_posts_link( __( '<span class="meta-nav">&larr;</span> Older posts', 'twentytwelve' ) ); ?></div>
-			<div class="nav-next"><?php previous_posts_link( __( 'Newer posts <span class="meta-nav">&rarr;</span>', 'twentytwelve' ) ); ?></div>
+                    <h3 class="assistive-text"><?php _e( 'Post navigation', 'twentytwelve' ); ?></h3>
+                    <div class="nav-previous"><?php previous_posts_link( __( '<span class="meta-nav">&larr;</span> Previous Page ', 'twentytwelve' ) ); ?></div>
+                    <div class="nav-showing"><?php printf('%s-%s of %s', ($paged-1)*$posts_per_page+1, ($paged-1)*$posts_per_page+$showing_posts, $total_results); ?></div>
+                    <div class="nav-next"><?php next_posts_link( __( 'Next Page <span class="meta-nav">&rarr;</span>', 'twentytwelve' ) ); ?></div>
 		</nav><!-- .navigation -->
 	<?php endif;
 }

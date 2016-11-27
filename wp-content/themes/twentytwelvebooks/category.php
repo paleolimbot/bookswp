@@ -23,6 +23,7 @@ get_header(); ?>
 			<?php if ( category_description() ) : // Show an optional category description ?>
 				<div class="archive-meta"><?php echo category_description(); ?></div>
 			<?php endif; ?>
+                        <?php twentytwelve_content_nav( 'nav-above' ); ?>
 			</header><!-- .archive-header -->
 
 			<?php
