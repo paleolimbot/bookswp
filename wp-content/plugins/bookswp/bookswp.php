@@ -136,7 +136,7 @@ function bookswp_create_taxonomies() {
 add_action( 'init', 'bookswp_create_taxonomies', 0 );
 
 function bookswp_create_post_type() {
-  // Register Custom Post Type
+    // Register Custom Post Type
 
     $labels = array(
             'name'                  => _x( 'Books', 'Post Type General Name', 'text_domain' ),
@@ -193,3 +193,48 @@ function bookswp_create_post_type() {
 
 }
 add_action( 'init', 'bookswp_create_post_type', 0);
+
+
+// Add/remove 'book' posts from the main query depending on options
+function bookswp_add_books_to_query( $query ) {
+    $currenttypes = $query->query_vars['post_type'];
+    if(!is_array($currenttypes)) {
+        $currenttypes = array($currenttypes);
+    }
+    if(get_option('bookswp_books_like_posts')) {
+        if ( (is_home() || is_archive() || is_search()) && 
+                $query->is_main_query() && !in_array('book', $currenttypes)) {
+            // add books to post type
+            $query->set( 'post_type',  array_merge($currenttypes , array( 'book' )));
+        }
+    } else {
+        if ( (is_search()) && $query->is_main_query()) {
+            // remove books from post type
+            $query->set( 'post_type',  'post' );
+        }
+    }
+  return $query;
+}
+add_action( 'pre_get_posts', 'bookswp_add_books_to_query' );
+
+
+/* register settings page */
+function bookswp_register_mysettings() { // whitelist options
+  register_setting( 'bookswp-usersettings', 'bookswp_books_like_posts' );
+}
+function bookswp_settings_page() {
+    include plugin_dir_path(__FILE__) . '/options.php';
+}
+function bookswp_create_settings_menu() {
+
+    //create new top-level menu
+    add_options_page('BooksWP Settings', 'BooksWP', 'administrator', 'bookswp-settings', 
+            'bookswp_settings_page' );
+
+}
+add_action('admin_menu', 'bookswp_create_settings_menu');
+
+if ( is_admin() ){ // admin actions
+  add_action( 'admin_menu', 'bookswp_create_settings_menu' );
+  add_action( 'admin_init', 'bookswp_register_mysettings' );
+}
