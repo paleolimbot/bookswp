@@ -305,7 +305,7 @@ function twentytwelve_content_nav( $html_id ) {
 		<nav id="<?php echo esc_attr( $html_id ); ?>" class="navigation" role="navigation">
                     <h3 class="assistive-text"><?php _e( 'Post navigation', 'twentytwelve' ); ?></h3>
                     <div class="nav-previous"><?php previous_posts_link( __( '<span class="meta-nav">&larr;</span> Previous Page ', 'twentytwelve' ) ); ?></div>
-                    <div class="nav-showing"><?php printf('%s-%s of %s', ($paged-1)*$posts_per_page+1, ($paged-1)*$posts_per_page+$showing_posts, $total_results); ?></div>
+                    <div class="nav-showing"><?php printf('Showing %s-%s of %s', ($paged-1)*$posts_per_page+1, ($paged-1)*$posts_per_page+$showing_posts, $total_results); ?></div>
                     <div class="nav-next"><?php next_posts_link( __( 'Next Page <span class="meta-nav">&rarr;</span>', 'twentytwelve' ) ); ?></div>
 		</nav><!-- .navigation -->
 	<?php endif;
