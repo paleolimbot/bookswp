@@ -45,8 +45,9 @@
                     } ?>
 		</div><!-- .entry-summary -->
 		<footer class="entry-meta">
-                    <?php the_terms($post->ID, 'genres', '<div class="book-terms">Genres: ', '</div>') ?>
-                    <?php the_terms($post->ID, 'keywords', '<div class="book-terms">Keywords: ', '</div>') ?>
+                    <div></div>
+                    <?php the_terms($post->ID, 'genres', '<span class="book-terms">Genres: ', $after='</span>') ?>
+                    <?php the_terms($post->ID, 'keywords', '<span class="book-terms">Keywords: ', $after='</span>') ?>
                     <div>
 			<?php twentytwelve_entry_meta(); ?>
 			<?php edit_post_link( __( 'Edit', 'twentytwelve' ), '<span class="edit-link">', '</span>' ); ?>
