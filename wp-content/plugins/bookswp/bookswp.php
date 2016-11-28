@@ -196,19 +196,30 @@ add_action( 'init', 'bookswp_create_post_type', 0);
 
 
 // Add/remove 'book' posts from the main query depending on options
+function bookswp_add_query_vars_filter( $vars ){
+  $vars[] = "booksearch";
+  return $vars;
+}
+add_filter( 'query_vars', 'bookswp_add_query_vars_filter' );
+
 function bookswp_add_books_to_query( $query ) {
     $currenttypes = $query->query_vars['post_type'];
     if(!is_array($currenttypes)) {
         $currenttypes = array($currenttypes);
     }
     if(get_option('bookswp_books_like_posts')) {
-        if ( (is_home() || is_archive() || is_search()) && 
+        if($query->query_vars['booksearch'] && $query->is_main_query()) {
+            $query->set( 'post_type',  'book' );
+        } else if ( (is_home() || is_archive() || is_search()) && 
                 $query->is_main_query() && !in_array('book', $currenttypes)) {
             // add books to post type
-            $query->set( 'post_type',  array_merge($currenttypes , array( 'book' )));
+            $newtypes = in_array('post', $currenttypes) ? array('book') : array('post', 'book');
+            $query->set( 'post_type',  array_merge($currenttypes , $newtypes));
         }
     } else {
-        if ( (is_search()) && $query->is_main_query()) {
+        if($query->query_vars['booksearch'] && $query->is_main_query()) {
+            $query->set( 'post_type',  'book' );
+        } else if ( (is_search()) && $query->is_main_query()) {
             // remove books from post type
             $query->set( 'post_type',  'post' );
         }
@@ -218,7 +229,7 @@ function bookswp_add_books_to_query( $query ) {
 add_action( 'pre_get_posts', 'bookswp_add_books_to_query' );
 
 
-/* register settings page */
+// register settings page 
 function bookswp_register_mysettings() { // whitelist options
   register_setting( 'bookswp-usersettings', 'bookswp_books_like_posts' );
 }
