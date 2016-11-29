@@ -229,6 +229,45 @@ function bookswp_add_books_to_query( $query ) {
 add_action( 'pre_get_posts', 'bookswp_add_books_to_query' );
 
 
+/**
+ * Extend WordPress search to include custom fields
+ * http://adambalee.com
+ * Join posts and postmeta tables: http://codex.wordpress.org/Plugin_API/Filter_Reference/posts_join
+ * Modify the search query with posts_where: http://codex.wordpress.org/Plugin_API/Filter_Reference/posts_where
+ * Prevent duplicates: http://codex.wordpress.org/Plugin_API/Filter_Reference/posts_distinct
+ */
+
+function bookswp_search_join( $join ) {
+    global $wpdb;
+    if ( is_search() ) {    
+        $join .=' LEFT JOIN '.$wpdb->postmeta. ' ON '. $wpdb->posts . '.ID = ' . $wpdb->postmeta . '.post_id ';
+    }
+    return $join;
+}
+function bookswp_search_where( $where ) {
+    global $wpdb;
+    if ( is_search() ) {
+        $where = preg_replace(
+            "/\(\s*".$wpdb->posts.".post_title\s+LIKE\s*(\'[^\']+\')\s*\)/",
+            "(".$wpdb->posts.".post_title LIKE $1) OR (".$wpdb->postmeta.".meta_value LIKE $1)", $where );
+    }
+    return $where;
+}
+function bookswp_search_distinct( $where ) {
+    if ( is_search() ) {
+        return "DISTINCT";
+    }
+    return $where;
+}
+if(get_option('bookswp_search_postmeta', true)) {
+    add_filter('posts_join', 'bookswp_search_join' );
+    add_filter( 'posts_where', 'bookswp_search_where' );
+    add_filter( 'posts_distinct', 'bookswp_search_distinct' );
+}
+
+
+//this filter modifies the get archives query so that the appropriate dates
+//are shown in the archive widget
 function bookswp_getarchives_where( $where ){
     return str_replace( "post_type = 'post'", "post_type IN ( 'post', 'book' )", $where );
 }
@@ -239,16 +278,15 @@ if(get_option('bookswp_books_like_posts')) {
 // register settings page 
 function bookswp_register_mysettings() { // whitelist options
   register_setting( 'bookswp-usersettings', 'bookswp_books_like_posts' );
+  register_setting( 'bookswp-usersettings', 'bookswp_search_postmeta' );
 }
 function bookswp_settings_page() {
     include plugin_dir_path(__FILE__) . '/options.php';
 }
 function bookswp_create_settings_menu() {
-
     //create new top-level menu
     add_options_page('BooksWP Settings', 'BooksWP', 'administrator', 'bookswp-settings', 
             'bookswp_settings_page' );
-
 }
 add_action('admin_menu', 'bookswp_create_settings_menu');
 
@@ -256,3 +294,11 @@ if ( is_admin() ){ // admin actions
   add_action( 'admin_menu', 'bookswp_create_settings_menu' );
   add_action( 'admin_init', 'bookswp_register_mysettings' );
 }
+
+// register Booksearch_Widget
+require_once plugin_dir_path(__FILE__) . '/booksearch.php';
+function bookswp_register_booksearch_widget() {
+    register_widget( 'Booksearch_Widget' );
+}
+add_action( 'widgets_init', 'bookswp_register_booksearch_widget' );
+
