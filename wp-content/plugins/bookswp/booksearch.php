@@ -26,7 +26,7 @@ class Booksearch_Widget extends WP_Widget {
 			echo $args['before_title'] . apply_filters( 'widget_title', $instance['title'] ) . $args['after_title'];
 		}		
             ?>
-            <form role="search" method="get" id="searchform" class="searchform" action="<?php get_site_url(); ?>">
+            <form role="search" method="get" id="searchform" class="searchform" action="<?php echo get_site_url(); ?>">
             <div>
                 <label class="screen-reader-text" for="s">Search for:</label>
                 <input value="<?php echo get_search_query(); ?>" name="s" id="s" type="text"/>

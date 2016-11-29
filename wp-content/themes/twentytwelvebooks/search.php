@@ -7,20 +7,39 @@
  * @since Twenty Twelve 1.0
  */
 
+$searchterms = get_query_var('booksearch') ? get_terms($args=array(
+    'taxonomy'=>array('people', 'shelves', 'keywords'), 
+    'search' => get_search_query(false))) : array() ;
+
+
 get_header(); ?>
 
 	<section id="primary" class="site-content">
 		<div id="content" role="main">
                 
-		<?php if ( have_posts() ) : ?>
-
-			<header class="page-header">
+                <?php if(have_posts() || !empty($searchterms)) : ?>
+                    <header class="page-header">
 				<h1 class="page-title"><?php printf( __( 'Search Results for: %s', 'twentytwelve' ), '<span>' . get_search_query() . '</span>' ); ?></h1>
-			        <?php twentytwelve_content_nav( 'nav-above' ); ?>
-                        </header>
+			        <?php 
+                                
+                                if(!empty($searchterms)) {
+                                    echo '<div class="book-terms">Terms: ';
+                                    foreach($searchterms as $term) {
+                                        echo '<a href="' . esc_url( get_term_link( $term ) ) . '" alt="' . esc_attr( sprintf('View all post filed under %s', $term->name ) ) . '">' . $term->name . '</a>';
+                                    } 
+                                    echo '</div>';
+                                }
+                                
+                                if(have_posts()) {
+                                    twentytwelve_content_nav( 'nav-above' ); 
+                                }
+                                
+                                ?>
+                    </header>
+                <?php endif; ?>
+                
+		<?php if ( have_posts() ) : ?>
                         
-			<?php twentytwelve_content_nav( 'nav-above' ); ?>
-
 			<?php /* Start the Loop */ ?>
 			<?php while ( have_posts() ) : the_post(); ?>
 				<?php 
