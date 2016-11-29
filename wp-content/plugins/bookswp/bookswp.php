@@ -229,6 +229,13 @@ function bookswp_add_books_to_query( $query ) {
 add_action( 'pre_get_posts', 'bookswp_add_books_to_query' );
 
 
+function bookswp_getarchives_where( $where ){
+    return str_replace( "post_type = 'post'", "post_type IN ( 'post', 'book' )", $where );
+}
+if(get_option('bookswp_books_like_posts')) {
+    add_filter( 'getarchives_where', 'bookswp_getarchives_where' );
+}
+
 // register settings page 
 function bookswp_register_mysettings() { // whitelist options
   register_setting( 'bookswp-usersettings', 'bookswp_books_like_posts' );
