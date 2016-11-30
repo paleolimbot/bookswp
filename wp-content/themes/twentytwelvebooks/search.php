@@ -21,11 +21,12 @@ get_header(); ?>
                     <header class="page-header">
 				<h1 class="page-title"><?php printf( __( 'Search Results for: %s', 'twentytwelve' ), '<span>' . get_search_query() . '</span>' ); ?></h1>
 			        <?php 
-                                
+                                $sep = '';
                                 if(!empty($searchterms)) {
                                     echo '<div class="book-terms">Terms: ';
                                     foreach($searchterms as $term) {
-                                        echo '<a href="' . esc_url( get_term_link( $term ) ) . '" alt="' . esc_attr( sprintf('View all post filed under %s', $term->name ) ) . '">' . $term->name . '</a>';
+                                        echo $sep.'<a href="' . esc_url( get_term_link( $term ) ) . '" alt="' . esc_attr( sprintf('View all post filed under %s', $term->name ) ) . '">' . $term->name . '</a>';
+                                        $sep = ', ';
                                     } 
                                     echo '</div>';
                                 }
@@ -62,7 +63,11 @@ get_header(); ?>
 
 				<div class="entry-content">
 					<p><?php _e( 'Sorry, but nothing matched your search criteria. Please try again with some different keywords.', 'twentytwelve' ); ?></p>
-					<?php get_search_form(); ?>
+                                        <?php if(get_query_var('booksearch')) {
+                                            bookswp_search_book_form();
+                                        } else {
+                                            get_search_form(); 
+                                        }?>
 				</div><!-- .entry-content -->
 			</article><!-- #post-0 -->
 
