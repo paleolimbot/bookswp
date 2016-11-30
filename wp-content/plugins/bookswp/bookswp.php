@@ -235,6 +235,9 @@ add_action( 'pre_get_posts', 'bookswp_add_books_to_query' );
  * Join posts and postmeta tables: http://codex.wordpress.org/Plugin_API/Filter_Reference/posts_join
  * Modify the search query with posts_where: http://codex.wordpress.org/Plugin_API/Filter_Reference/posts_where
  * Prevent duplicates: http://codex.wordpress.org/Plugin_API/Filter_Reference/posts_distinct
+ * 
+ * Could query only books by using global $wp_query, but this would restrict administrator
+ * functionality. Leaving this as is for now.
  */
 
 function bookswp_search_join( $join ) {

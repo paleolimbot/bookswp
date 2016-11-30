@@ -1,5 +1,18 @@
 <?php
 
+function bookswp_search_book_form() {
+    ?>
+    <form role="search" method="get" id="searchform" class="searchform" action="<?php echo get_site_url(); ?>">
+    <div>
+        <label class="screen-reader-text" for="s">Search for:</label>
+        <input value="<?php echo get_search_query(); ?>" name="s" id="s" type="text"/>
+        <input value="true" name="booksearch" type="hidden"/>
+        <input id="searchsubmit" value="Search books" type="submit"/>
+    </div>
+    </form>
+    <?php
+}
+
 class Booksearch_Widget extends WP_Widget {
 
 	/**
@@ -22,19 +35,10 @@ class Booksearch_Widget extends WP_Widget {
 	public function widget( $args, $instance ) {
 	    // outputs the content of the widget
             echo $args['before_widget'];
-		if ( ! empty( $instance['title'] ) ) {
-			echo $args['before_title'] . apply_filters( 'widget_title', $instance['title'] ) . $args['after_title'];
-		}		
-            ?>
-            <form role="search" method="get" id="searchform" class="searchform" action="<?php echo get_site_url(); ?>">
-            <div>
-                <label class="screen-reader-text" for="s">Search for:</label>
-                <input value="<?php echo get_search_query(); ?>" name="s" id="s" type="text"/>
-                <input value="true" name="booksearch" type="hidden"/>
-                <input id="searchsubmit" value="Search books" type="submit"/>
-            </div>
-            </form>
-            <?php
+            if ( ! empty( $instance['title'] ) ) {
+                    echo $args['before_title'] . apply_filters( 'widget_title', $instance['title'] ) . $args['after_title'];
+            }		
+            bookswp_search_book_form();
             echo $args['after_widget'];
 	}
 
@@ -68,3 +72,4 @@ class Booksearch_Widget extends WP_Widget {
             return $instance;
 	}
 }
+
