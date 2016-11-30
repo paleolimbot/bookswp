@@ -51,6 +51,7 @@
                     <div>
 			<?php twentytwelve_entry_meta(); ?>
 			<?php edit_post_link( __( 'Edit', 'twentytwelve' ), '<span class="edit-link">', '</span>' ); ?>
+                        <?php echo bookswp_goodreads_link(get_post()); ?>
                     </div>
 		</footer><!-- .entry-meta -->
 	</article><!-- #post -->

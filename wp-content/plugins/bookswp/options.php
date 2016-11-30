@@ -37,6 +37,14 @@
             and administrator interfaces.
         </td>
         </tr>
+        <tr valign="top">
+        <th scope="row">Goodreads API Key</th>
+        <td><input type="text" name="bookswp_goodreads_api" 
+                   value=" <?php echo get_option('bookswp_goodreads_api', '') ; ?>" />
+            Add a <a href="https://www.goodreads.com/api/keys">Goodreads API key</a> to add books by ISBN, search by title, etc. Goodreads
+            links can still appear associated with posts without a key.
+        </td>
+        </tr>
     </table>
     
     <?php submit_button(); ?>

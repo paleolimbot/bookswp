@@ -282,6 +282,7 @@ if(get_option('bookswp_books_like_posts')) {
 function bookswp_register_mysettings() { // whitelist options
   register_setting( 'bookswp-usersettings', 'bookswp_books_like_posts' );
   register_setting( 'bookswp-usersettings', 'bookswp_search_postmeta' );
+  register_setting( 'bookswp-usersettings', 'bookswp_goodreads_api' );
 }
 function bookswp_settings_page() {
     include plugin_dir_path(__FILE__) . '/options.php';
@@ -305,3 +306,6 @@ function bookswp_register_booksearch_widget() {
 }
 add_action( 'widgets_init', 'bookswp_register_booksearch_widget' );
 
+// register add by goodreads on the post edit page
+require_once plugin_dir_path(__FILE__) . '/bookapis.php';
+add_action( 'edit_form_top', 'bookswp_do_goodreads_lookup');

@@ -10,7 +10,7 @@
 <GoodreadsResponse>  
     <Request>    
         <authentication>true</authentication>      
-        <key><![CDATA[HSkIMuOGlxFIOmfBCGFVA]]></key>    
+        <key><![CDATA[APIKEY]]></key>    
         <method><![CDATA[book_title]]></method>  
     </Request>  
     <book>  
@@ -90,7 +90,7 @@
 </GoodreadsResponse>
  */
 
-function bookswp_goodreads_parse_book_node($node) {
+function _bookswp_goodreads_parse_book_node($node) {
     $book = array();
     foreach($node->childNodes as $n) {
         if($n->hasChildNodes()) {
@@ -115,33 +115,154 @@ function bookswp_goodreads_parse_book_node($node) {
     return $book;
 }
 
-function bookswp_goodreads_parse($source) {
+function _bookswp_goodreads_parse($source) {
     $dom = new DOMDocument();
-    @$dom->load($source); // suppresss not found errors
+    // parsing the <error> tag is not possible without some magic, because
+    // goodreads returns 404 NOT FOUND and the XML parser does parse
+    @$dom->load($source);
     if($dom->hasChildNodes()) {
+        $books = array();
         foreach($dom->firstChild->childNodes as $domNode) {
             if($domNode->nodeName == 'book') {
-                return bookswp_goodreads_parse_book_node($domNode);
+                $books[] = _bookswp_goodreads_parse_book_node($domNode);
             }
         }
+        return $books;
     }
     return NULL;
 }
 
-/*
-<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
-<head>
-  <meta charset="utf-8">
-</head>
-<body>
-<?php
+function bookswp_get_goodreads_by_isbn($isbn, $apikey) {
+    return _bookswp_goodreads_parse(sprintf('https://www.goodreads.com/book/isbn?isbn=%s&key=%s',
+             urlencode($isbn), urlencode($apikey)));
+}
 
-echo '<?xml version="1.0" encoding="UTF-8"?>';
-echo '<pre>';
-$res = bookswp_goodreads_parse('https://www.goodreads.com/book/isbn?isbn=9780439064866&key=HSkIMuOGlxFIOmfBCGFVA');
-var_dump($res);
-echo '</pre>';
-?>
-</body>
- * 
- */
+function bookswp_get_goodreads_by_title($title, $apikey) {
+    return _bookswp_goodreads_parse(sprintf('https://www.goodreads.com/book/title?title=%s&key=%s',
+             urlencode($title), urlencode($apikey)));
+}
+
+function bookswp_do_goodreads_lookup($post) {
+    if($post->post_type == 'book' && !$post->post_title && !$post->post_content) {
+        $apikey = get_option('bookswp_goodreads_api', '');
+        $books = NULL;
+        if($_GET['isbn'] && $apikey) {
+            $books = bookswp_get_goodreads_by_isbn($_GET['isbn'], $apikey);
+        } else if($_GET['booktitle'] && $apikey) {
+            $books = bookswp_get_goodreads_by_title($_GET['booktitle'], $apikey);
+        }
+        if(empty($books)) {
+            if(empty($apikey)) {
+                echo '<div>Goodreads API key required for Goodreads lookup.</div>';
+            } else if($_GET['isbn']) {
+                echo '<div>Goodreads lookup failed for ISBN "'. $_GET['isbn'] . '"</div>';
+            } else if($_GET['booktitle']) {
+                echo '<div>Goodreads lookup failed for title "'. $_GET['booktitle'] . '"</div>';
+            }
+        } else if($books['error']) {
+            if($_GET['isbn']) {
+                echo '<div>Goodreads lookup failed for ISBN "'. $_GET['isbn'] . '"' . $books['error'] . '</div>';
+            } else if($_GET['booktitle']) {
+                echo '<div>Goodreads lookup failed for title "'. $_GET['booktitle'] . '"' . $books['error'] . '</div>';
+            }
+        } else if(count($books) == 1) {
+            $book = $books[0];
+            $post->post_title = $book['title'];
+            $post->post_content = $book['description'];
+            if($book['authors']) add_post_meta($post->ID, 'author', implode('/', $book['authors']));
+            if($book['isbn13']) add_post_meta($post->ID, 'isbn13', $book['isbn13']);
+            if($book['isbn']) add_post_meta($post->ID, 'isbn10', $book['isbn']);
+            if($book['publisher']) add_post_meta($post->ID, 'publisher', $book['publisher']);
+            if($book['publication_year']) add_post_meta($post->ID, 'publication_year', $book['publication_year']);
+            $term_ids = array();
+            foreach($book['authors'] as $author) {
+                $existing_term = get_terms($args=array(
+                                    'taxonomy'=>array('people'), 
+                                    'name' => $author,
+                                    'hide_empty' => false,)) ;
+                if(!empty($existing_term)) {
+                    $term_ids[] = $existing_term[0]->term_id;
+                } else {
+                    //add term
+                    $newterm = wp_insert_term($author, 'people');
+                    if(!is_wp_error($newterm)) {
+                        $term_ids[] = $newterm['term_id'];
+                    } else {
+                        echo '<!--' . var_dump($newterm) . '-->';
+                    }
+                }       
+            }
+            wp_set_post_terms($post->ID, $term_ids, $taxonomy='people');
+            echo '<div>Goodreads lookup succeeded.</div>';
+        } else {
+            // multiple book results (does not currently happen with current results)
+            echo '<div>Goodreads found the following books:</div>';
+            echo '<ul>';
+            foreach($books as $book) {
+                echo '<li><a href="?post_new.php?post_type=book&isbn=' . $book['isbn'] . '">' . $book['title'] . '</a> by ' . implode(', ', $book['authors']) . '</li>';
+            }
+            echo '</ul>';
+        }
+        
+    }
+}
+
+function bookswp_goodreads_link($post, $linktext='View on Goodreads') {
+    $isbn13 = get_post_meta($post->ID, 'isbn13', true);
+    $q = NULL;
+    if(!empty($isbn13)) {
+        $q = $isbn13;
+    } else {
+        $q = $post->post_title;
+    }
+    return '<a class="goodreads-link" href="https://www.goodreads.com/search?q=' . 
+                urlencode($q) . '">' . $linktext . '</a>';
+}
+
+
+// echo the quick add form
+function bookswp_quick_add_book_form() {
+    ?>
+<div id="bookswp-quickadd">
+<form action="<?php echo admin_url('post-new.php') ?>" method="GET">
+    <input type="hidden" name="post_type" value="book"/>
+    <label class="prompt" for="booktitle">Title or ISBN</label>
+    <input id="booktitle" type="text" name="booktitle"/>
+    <input class="button" type="submit" value="New Book">
+</form>
+</div>
+    <?php
+}
+
+add_action( 'admin_notices', 'bookswp_quick_add_book_form' );
+
+// We need some CSS to position the paragraph
+function bookswp_quick_add_css() {
+	?>
+	<style type='text/css'>
+	#bookswp-quickadd {
+		float: right;
+		padding-right: 15px;
+		padding-top: 2px;		
+		margin: 0;
+		font-size: 12px;
+	}
+        #bookswp-quickadd label {
+                vertical-align: middle;
+		padding: 4px;		
+		margin: 0;
+		font-size: 12px;
+                color: #72777c;
+	}
+        #bookswp-quickadd .button {
+		font-size: 12px;
+                padding: 0 5px 1px;
+	}
+        #bookswp-quickadd input {
+            vertical-align: middle;
+            font-size: 12px;
+        }
+	</style>
+        <?php
+}
+add_action( 'admin_head', 'bookswp_quick_add_css' );
