@@ -90,6 +90,54 @@
 </GoodreadsResponse>
  */
 
+function _stripisbn($isbn) {
+    return preg_replace('/[\s-]/', '', $isbn);
+}
+
+function _bookswp_is_trying_isbn($isbn) {
+    $allisnum = array_map('is_numeric', $isbn);
+    $ntrue = count(array_filter($allisnum));
+    if(($ntrue / (float)count($isbn)) > 0.5) {
+        return false;
+    } else {
+        return NULL;
+    }
+}
+
+function _bookswp_isbn_check($isbn) {
+    $isbn = str_split(_stripisbn($isbn));
+    if(count($isbn) == 10) {
+        $sum = 0;
+        foreach($isbn as $i => $d) {
+            if($i == 9) break;
+            if(!is_numeric($d)) _bookswp_is_trying_isbn($isbn);
+            $sum += intval($d) * (10-$i);
+        }
+        if($isbn[9] == "X" || $isbn[9]=="x") {
+            return (($sum+10) % 11) == 0;
+        } else if(is_numeric($isbn[9])) {
+            return (($sum + intval($isbn[9])) % 11) == 0;
+        } else {
+            return _bookswp_is_trying_isbn($isbn);
+        }
+    } else if(count($isbn) == 13) {
+        $sum = 0;
+        foreach($isbn as $i=>$d) {
+            if($i==12) break;
+            if(!is_numeric($d)) return _bookswp_is_trying_isbn($isbn);
+            $int = intval($d);
+            $sum  += (floor($i/2) == 0) ? $int : $int*3;
+        }
+        if(is_numeric($isbn[12])) {
+            return (10 - ($sum+10) % 10) == intval($isbn[12]);
+        } else {
+            return _bookswp_is_trying_isbn($isbn);
+        }
+    } else {
+        return _bookswp_is_trying_isbn($isbn);
+    }
+}
+
 function _bookswp_goodreads_parse_book_node($node) {
     $book = array();
     foreach($node->childNodes as $n) {
@@ -146,10 +194,17 @@ function bookswp_do_goodreads_lookup($post) {
     if($post->post_type == 'book' && !$post->post_title && !$post->post_content) {
         $apikey = get_option('bookswp_goodreads_api', '');
         $books = NULL;
+        $validisbn = NULL;
         if($_GET['isbn'] && $apikey) {
-            $books = bookswp_get_goodreads_by_isbn($_GET['isbn'], $apikey);
+            $validisbn = _bookswp_isbn_check($_GET['isbn']);
+            $books = bookswp_get_goodreads_by_isbn(_stripisbn($_GET['isbn']), $apikey);
         } else if($_GET['booktitle'] && $apikey) {
-            $books = bookswp_get_goodreads_by_title($_GET['booktitle'], $apikey);
+            $validisbn = _bookswp_isbn_check($_GET['booktitle']);
+            if($validisbn) {
+                $books = bookswp_get_goodreads_by_isbn(_stripisbn($_GET['booktitle']), $apikey);
+            } else {
+                $books = bookswp_get_goodreads_by_title($_GET['booktitle'], $apikey);
+            }
         }
         if(empty($books)) {
             if(empty($apikey)) {
@@ -267,6 +322,11 @@ function bookswp_quick_add_css() {
 	}
         <?php endif; ?>
 	</style>
+        <script type="text/javascript">
+        function isbn13check(var isbn) {
+            
+        }    
+        </script>
         <?php
 }
 
