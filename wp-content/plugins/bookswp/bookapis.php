@@ -249,19 +249,26 @@ function bookswp_do_goodreads_lookup($post) {
                 }       
             }
             wp_set_post_terms($post->ID, $term_ids, $taxonomy='people');
-            //check books to see if book currently exists
+            
+            //echo success
             echo '<div>Goodreads lookup succeeded.</div>';
-            $query = new WP_Query($args=array('title'=>$post->post_title, 'post_type'=>'book'));
-            if($query->have_posts()) {
+            
+            //echo possible duplicate books
+            //check books to see if book currently exists
+            $dcq = new WP_Query($args=array('title'=>$book['title'], 'post_type'=>'book'));
+            if($dcq->have_posts()) {
+                $backup = $post;
                 echo '<div>Also, the following possibly identical books in your collection were found:</div>'
                      . '<ul style="list-style: initial; list-style-position: inside; margin-top: 5px; margin-bottom: 5px;">';
-                while($query->have_posts()) {
-                    $query->the_post();
-                    $term_list = wp_get_post_terms($query->post->ID, 'people', array("fields" => "names"));
+                while($dcq->have_posts()) {
+                    $dcq->the_post(); // calling this overrides global $post
+                    $term_list = wp_get_post_terms($dcq->post->ID, 'people', array("fields" => "names"));
                     $authors = empty($term_list) ? '' : ' (' . implode(', ', $term_list) . ')';
-                    echo '<li><a href="'. get_edit_post_link($query->post->ID) . '">' . 
-                            $query->post->post_title . '</a>' . $authors . '</li>';
+                    echo '<li><a href="'. get_edit_post_link($dcq->post->ID) . '">' . 
+                            $dcq->post->post_title . '</a>' . $authors . '</li>';
                 }
+                global $post;
+                $post = $backup;
                 echo '</ul>';
             }
         } else {
