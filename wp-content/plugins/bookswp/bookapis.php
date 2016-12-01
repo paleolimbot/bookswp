@@ -126,10 +126,10 @@ function _bookswp_isbn_check($isbn) {
             if($i==12) break;
             if(!is_numeric($d)) return _bookswp_is_trying_isbn($isbn);
             $int = intval($d);
-            $sum  += (floor($i/2) == 0) ? $int : $int*3;
+            $sum  += (($i%2) == 0) ? $int : $int*3;
         }
         if(is_numeric($isbn[12])) {
-            return (10 - ($sum+10) % 10) == intval($isbn[12]);
+            return (($sum+intval($isbn[12])) % 10) == 0;
         } else {
             return _bookswp_is_trying_isbn($isbn);
         }
@@ -296,8 +296,13 @@ function bookswp_quick_add_book_form() {
 <form action="<?php echo admin_url('post-new.php') ?>" method="GET">
     <input type="hidden" name="post_type" value="book"/>
     <label class="prompt" for="booktitle">Title or ISBN</label>
-    <input id="booktitle" type="text" name="booktitle" value="<?php echo esc_attr($_GET['booktitle']); ?>"/>
+    <input id="booktitle" type="text" name="booktitle" 
+           value="<?php echo esc_attr($_GET['booktitle']); ?>"
+           oninput="isbn13check();"/>
     <input class="button" type="submit" value="Add Book">
+    <script type="text/javascript">
+        isbn13check();
+    </script>
 </form>
 </div>
     <?php
@@ -337,9 +342,42 @@ function bookswp_quick_add_css() {
         <?php endif; ?>
 	</style>
         <script type="text/javascript">
-        function isbn13check(var isbn) {
+        function isbn13check() {
+            var e = document.getElementById("booktitle");
+            var isbn = e.value.replace(/[\s-]/g, '');
+            var correct = false;
+            if(isbn.length == 10) {
+                var sum=0;
+                for(var i=0; i<9; i++) {
+                    sum += parseInt(isbn.substring(i, i+1))*(10-i);
+                }
+                var check = isbn.substring(9, 10).toUpperCase();
+                if(sum == 0) {
+                    correct = false;
+                } else if(check == "X") {
+                    correct = (sum+10) % 11 == 0;
+                } else if(!isNaN(parseInt(check))) {
+                    correct = (sum+parseInt(check)) % 11 == 0;
+                }
+            } else if(isbn.length == 13) {
+                var sum=0;
+                for(var i=0; i<12; i++) {
+                    if(i%2==0) {
+                        sum += parseInt(isbn.substring(i, i+1))*1;
+                    } else {
+                        sum += parseInt(isbn.substring(i, i+1))*3;
+                    }
+                }
+                var check = parseInt(isbn.substring(12, 13));
+                correct = !isNaN(check) && (sum != 0) && ((sum + check) % 10 == 0);
+            } 
             
-        }    
+            if(correct) {
+                e.style.color = 'green';
+            } else {
+                e.style.color = 'initial';
+            }
+        }
         </script>
         <?php
 }
