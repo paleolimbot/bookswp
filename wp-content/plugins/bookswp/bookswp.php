@@ -299,13 +299,18 @@ if ( is_admin() ){ // admin actions
   add_action( 'admin_init', 'bookswp_register_mysettings' );
 }
 
-// register Booksearch_Widget
-require_once plugin_dir_path(__FILE__) . '/booksearch.php';
-function bookswp_register_booksearch_widget() {
-    register_widget( 'Booksearch_Widget' );
-}
-add_action( 'widgets_init', 'bookswp_register_booksearch_widget' );
-
 // register add by goodreads on the post edit page
 require_once plugin_dir_path(__FILE__) . '/bookapis.php';
 add_action( 'edit_form_top', 'bookswp_do_goodreads_lookup');
+add_action( 'admin_notices', 'bookswp_quick_add_book_form' );
+add_action( 'admin_head', 'bookswp_quick_add_css' );
+add_action( 'wp_head', 'bookswp_quick_add_css' );
+
+
+// register Booksearch_Widget and QuickAdd_Widget
+require_once plugin_dir_path(__FILE__) . '/booksearch.php';
+function bookswp_register_widgets() {
+    register_widget( 'Booksearch_Widget' );
+    register_widget( 'QuickAdd_Widget' );
+}
+add_action( 'widgets_init', 'bookswp_register_widgets' );

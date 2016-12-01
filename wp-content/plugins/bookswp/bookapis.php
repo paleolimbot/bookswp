@@ -228,18 +228,17 @@ function bookswp_quick_add_book_form() {
     <input type="hidden" name="post_type" value="book"/>
     <label class="prompt" for="booktitle">Title or ISBN</label>
     <input id="booktitle" type="text" name="booktitle"/>
-    <input class="button" type="submit" value="New Book">
+    <input class="button" type="submit" value="Add Book">
 </form>
 </div>
     <?php
 }
 
-add_action( 'admin_notices', 'bookswp_quick_add_book_form' );
-
 // We need some CSS to position the paragraph
 function bookswp_quick_add_css() {
 	?>
 	<style type='text/css'>
+        <?php if(is_admin()) : ?>
 	#bookswp-quickadd {
 		float: right;
 		padding-right: 15px;
@@ -262,7 +261,74 @@ function bookswp_quick_add_css() {
             vertical-align: middle;
             font-size: 12px;
         }
+        <?php else: ?>
+        #bookswp-quickadd label {
+             display: none;
+	}
+        <?php endif; ?>
 	</style>
         <?php
 }
-add_action( 'admin_head', 'bookswp_quick_add_css' );
+
+class QuickAdd_Widget extends WP_Widget {
+
+	/**
+	 * Sets up the widgets name etc
+	 */
+	public function __construct() {
+		$widget_ops = array( 
+			'classname' => 'quickaddbook',
+			'description' => 'Quickly add a book by title or ISBN',
+		);
+		parent::__construct( 'quickaddbook', 'Book Quick Add', $widget_ops );
+	}
+
+	/**
+	 * Outputs the content of the widget
+	 *
+	 * @param array $args
+	 * @param array $instance
+	 */
+	public function widget( $args, $instance ) {
+	    // outputs the content of the widget only if user is an admin
+            if ( current_user_can('edit_posts') ) {
+                //The user has the "administrator" role
+                echo $args['before_widget'];
+                if ( ! empty( $instance['title'] ) ) {
+                        echo $args['before_title'] . apply_filters( 'widget_title', $instance['title'] ) . $args['after_title'];
+                }		
+                bookswp_quick_add_book_form();
+                echo $args['after_widget'];
+            }
+	}
+
+	/**
+	 * Outputs the options form on admin
+	 *
+	 * @param array $instance The widget options
+	 */
+	public function form( $instance ) {
+            // outputs the options form on admin
+            $title = ! empty( $instance['title'] ) ? $instance['title'] : esc_html__( 'New title', 'text_domain' );
+            ?>
+            <p>
+            <label for="<?php echo esc_attr( $this->get_field_id( 'title' ) ); ?>"><?php esc_attr_e( 'Title:', 'text_domain' ); ?></label> 
+            <input class="widefat" id="<?php echo esc_attr( $this->get_field_id( 'title' ) ); ?>" name="<?php echo esc_attr( $this->get_field_name( 'title' ) ); ?>" type="text" value="<?php echo esc_attr( $title ); ?>">
+            </p>
+            <?php 
+	}
+
+	/**
+	 * Processing widget options on save
+	 *
+	 * @param array $new_instance The new options
+	 * @param array $old_instance The previous options
+	 */
+	public function update( $new_instance, $old_instance ) {
+	    // processes widget options to be saved
+            $instance = array();
+            $instance['title'] = ( ! empty( $new_instance['title'] ) ) ? strip_tags( $new_instance['title'] ) : '';
+
+            return $instance;
+	}
+}
