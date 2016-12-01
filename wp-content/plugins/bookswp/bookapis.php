@@ -97,7 +97,7 @@ function _stripisbn($isbn) {
 function _bookswp_is_trying_isbn($isbn) {
     $allisnum = array_map('is_numeric', $isbn);
     $ntrue = count(array_filter($allisnum));
-    if(($ntrue / (float)count($isbn)) > 0.5) {
+    if(($ntrue / (float)count($isbn)) > 0.75 && $ntrue > 5) {
         return false;
     } else {
         return NULL;
@@ -202,17 +202,18 @@ function bookswp_do_goodreads_lookup($post) {
             $validisbn = _bookswp_isbn_check($_GET['booktitle']);
             if($validisbn) {
                 $books = bookswp_get_goodreads_by_isbn(_stripisbn($_GET['booktitle']), $apikey);
-            } else {
+            } else if($validisbn === NULL) {
                 $books = bookswp_get_goodreads_by_title($_GET['booktitle'], $apikey);
             }
         }
         if(empty($books)) {
+            $isbnerror = ($validisbn === false) ? " Invalid ISBN!": "";
             if(empty($apikey)) {
                 echo '<div>Goodreads API key required for Goodreads lookup.</div>';
             } else if($_GET['isbn']) {
-                echo '<div>Goodreads lookup failed for ISBN "'. $_GET['isbn'] . '"</div>';
+                echo '<div>Goodreads lookup failed for ISBN "'. $_GET['isbn'] . '".'. $isbnerror . '</div>';
             } else if($_GET['booktitle']) {
-                echo '<div>Goodreads lookup failed for title "'. $_GET['booktitle'] . '"</div>';
+                echo '<div>Goodreads lookup failed for title "'. $_GET['booktitle'] . '".'. $isbnerror . '</div>';
             }
         } else if($books['error']) {
             if($_GET['isbn']) {
@@ -248,7 +249,21 @@ function bookswp_do_goodreads_lookup($post) {
                 }       
             }
             wp_set_post_terms($post->ID, $term_ids, $taxonomy='people');
+            //check books to see if book currently exists
             echo '<div>Goodreads lookup succeeded.</div>';
+            $query = new WP_Query($args=array('title'=>$post->post_title, 'post_type'=>'book'));
+            if($query->have_posts()) {
+                echo '<div>Also, the following possibly identical books in your collection were found:</div>'
+                     . '<ul style="list-style: initial; list-style-position: inside; margin-top: 5px; margin-bottom: 5px;">';
+                while($query->have_posts()) {
+                    $query->the_post();
+                    $term_list = wp_get_post_terms($query->post->ID, 'people', array("fields" => "names"));
+                    $authors = empty($term_list) ? '' : ' (' . implode(', ', $term_list) . ')';
+                    echo '<li><a href="'. get_edit_post_link($query->post->ID) . '">' . 
+                            $query->post->post_title . '</a>' . $authors . '</li>';
+                }
+                echo '</ul>';
+            }
         } else {
             // multiple book results (does not currently happen with current results)
             echo '<div>Goodreads found the following books:</div>';
@@ -258,7 +273,6 @@ function bookswp_do_goodreads_lookup($post) {
             }
             echo '</ul>';
         }
-        
     }
 }
 
@@ -282,7 +296,7 @@ function bookswp_quick_add_book_form() {
 <form action="<?php echo admin_url('post-new.php') ?>" method="GET">
     <input type="hidden" name="post_type" value="book"/>
     <label class="prompt" for="booktitle">Title or ISBN</label>
-    <input id="booktitle" type="text" name="booktitle"/>
+    <input id="booktitle" type="text" name="booktitle" value="<?php echo esc_attr($_GET['booktitle']); ?>"/>
     <input class="button" type="submit" value="Add Book">
 </form>
 </div>
