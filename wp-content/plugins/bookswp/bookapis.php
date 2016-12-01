@@ -190,6 +190,49 @@ function bookswp_get_goodreads_by_title($title, $apikey) {
              urlencode($title), urlencode($apikey)));
 }
 
+function _bookswp_insert_goodreads_thumbnail($url, $parent_post_id) {
+    //strpos($a, 'are') !== false
+    //https://s.gr-assets.com/assets/nophoto/book/111x148-bcc042a9c91a29c1d680899eff700a03.png
+    //is usually the nophoto url, but this may change
+    if(!empty($url) && strpos($url, 'nophoto') === false) {
+        $upload_dir = wp_upload_dir();
+        $filename = path_join($upload_dir['path'] , md5($url) . '.jpg');
+        @copy($url, $filename);
+        if(file_exists($filename)) {
+            // Check the type of file. We'll use this as the 'post_mime_type'.
+            $filetype = wp_check_filetype( basename( $filename ), null );
+
+            // Prepare an array of post data for the attachment.
+            $attachment = array(
+                    'guid'           => $upload_dir['url'] . '/' . basename( $filename ), 
+                    'post_mime_type' => $filetype['type'],
+                    'post_title'     => preg_replace( '/\.[^.]+$/', '', basename( $filename ) ),
+                    'post_content'   => '',
+                    'post_status'    => 'inherit'
+            );
+
+            // Insert the attachment.
+            $attach_id = wp_insert_attachment( $attachment, $filename, $parent_post_id );
+
+            // Make sure that this file is included, as wp_generate_attachment_metadata() depends on it.
+            require_once( ABSPATH . 'wp-admin/includes/image.php' );
+
+            // Generate the metadata for the attachment, and update the database record.
+            $attach_data = wp_generate_attachment_metadata( $attach_id, $filename );
+            wp_update_attachment_metadata( $attach_id, $attach_data );
+
+            set_post_thumbnail( $parent_post_id, $attach_id );
+            
+            return $attach_id;
+        } else {
+            //failed
+            return 0;
+        }
+    } else {
+        return 0;
+    }
+}
+
 function bookswp_do_goodreads_lookup($post) {
     if($post->post_type == 'book' && !$post->post_title && !$post->post_content) {
         $apikey = get_option('bookswp_goodreads_api', '');
@@ -223,6 +266,7 @@ function bookswp_do_goodreads_lookup($post) {
             }
         } else if(count($books) == 1) {
             $book = $books[0];
+            //update the content in the $post object (which does not save to the DB)
             $post->post_title = $book['title'];
             $post->post_content = $book['description'];
             if($book['authors']) add_post_meta($post->ID, 'author', implode('/', $book['authors']));
@@ -230,6 +274,7 @@ function bookswp_do_goodreads_lookup($post) {
             if($book['isbn']) add_post_meta($post->ID, 'isbn10', $book['isbn']);
             if($book['publisher']) add_post_meta($post->ID, 'publisher', $book['publisher']);
             if($book['publication_year']) add_post_meta($post->ID, 'publication_year', $book['publication_year']);
+            //add authors as terms in the 'people' taxonomy
             $term_ids = array();
             foreach($book['authors'] as $author) {
                 $existing_term = get_terms($args=array(
@@ -244,11 +289,16 @@ function bookswp_do_goodreads_lookup($post) {
                     if(!is_wp_error($newterm)) {
                         $term_ids[] = $newterm['term_id'];
                     } else {
-                        echo '<!--' . var_dump($newterm) . '-->';
+                        echo '<!--';
+                        var_dump($newterm);
+                        echo '-->';
                     }
                 }       
             }
             wp_set_post_terms($post->ID, $term_ids, $taxonomy='people');
+            
+            //add the post thumbnail
+            _bookswp_insert_goodreads_thumbnail($book['image_url'], $post->ID);
             
             //echo success
             echo '<div>Goodreads lookup succeeded.</div>';
