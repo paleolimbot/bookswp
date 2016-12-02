@@ -49,7 +49,7 @@ class Booksearch_Widget extends WP_Widget {
 	 */
 	public function form( $instance ) {
             // outputs the options form on admin
-            $title = ! empty( $instance['title'] ) ? $instance['title'] : esc_html__( 'New title', 'text_domain' );
+            $title = $instance['title'] ;            
             ?>
             <p>
             <label for="<?php echo esc_attr( $this->get_field_id( 'title' ) ); ?>"><?php esc_attr_e( 'Title:', 'text_domain' ); ?></label> 
