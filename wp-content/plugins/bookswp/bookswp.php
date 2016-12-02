@@ -314,3 +314,4 @@ function bookswp_register_widgets() {
     register_widget( 'QuickAdd_Widget' );
 }
 add_action( 'widgets_init', 'bookswp_register_widgets' );
+
