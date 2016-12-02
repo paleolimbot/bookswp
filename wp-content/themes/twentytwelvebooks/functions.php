@@ -555,3 +555,15 @@ function twentytwelve_customize_preview_js() {
 	wp_enqueue_script( 'twentytwelve-customizer', get_template_directory_uri() . '/js/theme-customizer.js', array( 'customize-preview' ), '20141120', true );
 }
 add_action( 'customize_preview_init', 'twentytwelve_customize_preview_js' );
+
+
+if ( ! function_exists( 'twentytwelve_login_logo' ) ) :
+function twentytwelve_login_logo() { ?>
+    <style type="text/css">
+        #login h1 a, .login h1 a {
+            background-image: url(<?php echo get_stylesheet_directory_uri(); ?>/images/bookstack.png);
+        }
+    </style>
+<?php }
+endif;
+add_action( 'login_enqueue_scripts', 'twentytwelve_login_logo' );
