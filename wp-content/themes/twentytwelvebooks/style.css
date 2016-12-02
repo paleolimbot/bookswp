@@ -1411,8 +1411,6 @@ a.comment-edit-link:hover {
 	font-size: 13px;
 	font-size: 0.928571429rem;
 	line-height: 1.714285714;
-	list-style-type: square;
-	list-style-position: inside;
 }
 .template-front-page .widget-area .widget li a {
 	color: #757575;

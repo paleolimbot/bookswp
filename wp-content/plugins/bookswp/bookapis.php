@@ -414,6 +414,9 @@ function bookswp_quick_add_css() {
             font-size: 12px;
         }
         <?php else: ?>
+        .widget-area #booktitle {
+            width: 53.66666666666%
+        }
         #bookswp-quickadd label {
              display: none;
 	}
