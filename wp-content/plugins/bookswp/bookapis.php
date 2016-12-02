@@ -256,12 +256,18 @@ function bookswp_do_goodreads_lookup($post) {
             } else if($_GET['isbn']) {
                 echo '<div>Goodreads lookup failed for ISBN "'. $_GET['isbn'] . '".'. $isbnerror . '</div>';
             } else if($_GET['booktitle']) {
+                if($validisbn === NULL) {
+                    $post->post_title = $_GET['booktitle'];
+                }
                 echo '<div>Goodreads lookup failed for title "'. $_GET['booktitle'] . '".'. $isbnerror . '</div>';
             }
         } else if($books['error']) {
             if($_GET['isbn']) {
                 echo '<div>Goodreads lookup failed for ISBN "'. $_GET['isbn'] . '"' . $books['error'] . '</div>';
             } else if($_GET['booktitle']) {
+                if($validisbn === NULL) {
+                    $post->post_title = $_GET['booktitle'];
+                }
                 echo '<div>Goodreads lookup failed for title "'. $_GET['booktitle'] . '"' . $books['error'] . '</div>';
             }
         } else if(count($books) == 1) {
