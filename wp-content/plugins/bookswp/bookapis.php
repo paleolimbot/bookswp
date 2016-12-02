@@ -195,38 +195,53 @@ function _bookswp_insert_goodreads_thumbnail($url, $parent_post_id) {
     //https://s.gr-assets.com/assets/nophoto/book/111x148-bcc042a9c91a29c1d680899eff700a03.png
     //is usually the nophoto url, but this may change
     if(!empty($url) && strpos($url, 'nophoto') === false) {
-        $upload_dir = wp_upload_dir();
-        $filename = path_join($upload_dir['path'] , md5($url) . '.jpg');
-        @copy($url, $filename);
-        if(file_exists($filename)) {
-            // Check the type of file. We'll use this as the 'post_mime_type'.
-            $filetype = wp_check_filetype( basename( $filename ), null );
-
-            // Prepare an array of post data for the attachment.
-            $attachment = array(
-                    'guid'           => $upload_dir['url'] . '/' . basename( $filename ), 
-                    'post_mime_type' => $filetype['type'],
-                    'post_title'     => preg_replace( '/\.[^.]+$/', '', basename( $filename ) ),
-                    'post_content'   => '',
-                    'post_status'    => 'inherit'
-            );
-
-            // Insert the attachment.
-            $attach_id = wp_insert_attachment( $attachment, $filename, $parent_post_id );
-
-            // Make sure that this file is included, as wp_generate_attachment_metadata() depends on it.
-            require_once( ABSPATH . 'wp-admin/includes/image.php' );
-
-            // Generate the metadata for the attachment, and update the database record.
-            $attach_data = wp_generate_attachment_metadata( $attach_id, $filename );
-            wp_update_attachment_metadata( $attach_id, $attach_data );
-
+        //check to make sure attachment doesn't exist
+        $title = md5($url);
+        $medquery = new WP_Query($args=array('post_type'=>'attachment', 
+                                'title'=>$title, 'post_status'=>'any'));
+        if($medquery->have_posts()) {
+            // use first
+            global $post;
+            $backup = $post;
+            $medquery->the_post();
+            $attach_id = $medquery->post->ID;
+            $post = $backup;
             set_post_thumbnail( $parent_post_id, $attach_id );
-            
             return $attach_id;
         } else {
-            //failed
-            return 0;
+            $upload_dir = wp_upload_dir();
+            $filename = path_join($upload_dir['path'] , $title . '.jpg');
+            @copy($url, $filename);
+            if(file_exists($filename)) {
+                // Check the type of file. We'll use this as the 'post_mime_type'.
+                $filetype = wp_check_filetype( basename( $filename ), null );
+
+                // Prepare an array of post data for the attachment.
+                $attachment = array(
+                        'guid'           => $upload_dir['url'] . '/' . basename( $filename ), 
+                        'post_mime_type' => $filetype['type'],
+                        'post_title'     => preg_replace( '/\.[^.]+$/', '', basename( $filename ) ),
+                        'post_content'   => '',
+                        'post_status'    => 'inherit'
+                );
+
+                // Insert the attachment. Do not attach to parent post, as this may cause confusion later
+                $attach_id = wp_insert_attachment( $attachment, $filename );
+
+                // Make sure that this file is included, as wp_generate_attachment_metadata() depends on it.
+                require_once( ABSPATH . 'wp-admin/includes/image.php' );
+
+                // Generate the metadata for the attachment, and update the database record.
+                $attach_data = wp_generate_attachment_metadata( $attach_id, $filename );
+                wp_update_attachment_metadata( $attach_id, $attach_data );
+
+                set_post_thumbnail( $parent_post_id, $attach_id );
+
+                return $attach_id;
+            } else {
+                //failed
+                return 0;
+            }
         }
     } else {
         return 0;
