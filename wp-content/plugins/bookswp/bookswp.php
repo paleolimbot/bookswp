@@ -203,6 +203,10 @@ function bookswp_add_query_vars_filter( $vars ){
 add_filter( 'query_vars', 'bookswp_add_query_vars_filter' );
 
 function bookswp_add_books_to_query( $query ) {
+    //exclude admin queries always
+    if($query->is_admin) {
+        return $query;
+    }
     $currenttypes = $query->query_vars['post_type'];
     if(!is_array($currenttypes)) {
         $currenttypes = array($currenttypes);
